@@ -1,0 +1,132 @@
+---
+title: "HW2_sliang"
+author: "Liang Shi"
+date: "9/9/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem 3
+
+Personlly, as a researcher on data science, I tune the hyperparameter all the time, and it's had to ensure every tuning can improve the model. So, version control is important for me to recall to any previous conditions of my code.
+
+# Problem 4
+
+### Load package
+```{r results="hide"}
+library(data.table)
+library('magrittr')
+library('tidyverse')
+```
+
+## Qusetion a
+```{r results="hide"}
+url_sen<-"https://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/Sensory.dat"
+df_sen<-read.table(url_sen, skip=1, fill=TRUE, header=TRUE)
+```
+### The issues in this data is the location of missing value is incorrect, so we use this function to align the data.
+```{r results="hide"}
+align_data <- function(row_){
+    if (is.na(row_['X5'])){
+      row_[2:6] <- row_[1:5]
+      row_[1] <- NA
+    }
+    return(row_)
+}
+df_sen_align<-data.table(t(apply(df_sen, 1, align_data)))
+```
+### Result
+```{r echo = FALSE}
+hist(df_sen_align$X1)
+```
+
+```{r echo = FALSE}
+hist(df_sen_align$X2)
+```
+
+```{r echo = FALSE}
+hist(df_sen_align$X3)
+```
+
+```{r echo = FALSE}
+hist(df_sen_align$X4)
+```
+
+```{r echo = FALSE}
+hist(df_sen_align$X5)
+```
+
+```{r echo = FALSE}
+knitr::kable(summary(df_sen_align[,-1]))
+```
+
+## Question b
+```{r results="hide"}
+url_gm<-"https://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/LongJumpData.dat"
+df_gm<-read.table(url_gm, skip=1, fill=TRUE, header=TRUE)
+```
+
+### The issue in this data is that the columns are messy, so we should reorganized it.
+```{r results="hide"}
+colnames(df_gm)<- NA
+df_gm_organized <- rbind(df_gm[,1:2],df_gm[,3:4],df_gm[,5:6],df_gm[,7:8])
+colnames(df_gm_organized) <- c('Year', 'Long_jump_data')
+```
+
+### Result
+```{r echo = FALSE}
+hist(df_gm_organized$Long_jump_data)
+```
+
+```{r echo = FALSE}
+knitr::kable(summary(df_gm_organized[2]))
+```
+
+## Question c
+```{r results="hide"}
+url_bw<-"https://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/BrainandBodyWeight.dat"
+df_bw<-read.table(url_bw, skip=1, fill=TRUE, header=TRUE)
+```
+
+### The issue in this data is similar to question b.
+```{r results="hide"}
+colnames(df_bw)<- NA
+df_bw_organized <- rbind(df_bw[,1:2],df_gm[,3:4],df_gm[,5:6])
+colnames(df_bw_organized) <- c('Brain_weight', 'Body_weight')
+```
+
+### Result
+```{r echo = FALSE}
+plot(df_bw_organized)
+```
+
+```{r echo = FALSE}
+knitr::kable(summary(df_bw_organized))
+```
+
+## Question d
+```{r results="hide"}
+url_to<-"https://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/tomato.dat"
+df_to<-read.table(url_to, skip=1, fill=TRUE, header=TRUE)
+```
+
+### The issue in this data is they put three densities together and splited by comma, so we first convert them to vectors then to data table.
+```{r results="hide"}
+get_density <- function(element){
+  return(as.numeric(unlist(strsplit(element,split=","))))
+}
+df_to_row <- data.table(apply(df_to[2,],2,get_density))
+colnames(df_to_row) <- c('Density_1', 'Density_2', 'Density_3')
+```
+
+### Result
+```{r echo = FALSE}
+plot(df_to_row)
+```
+
+```{r echo = FALSE}
+knitr::kable(summary(df_to_row))
+```
