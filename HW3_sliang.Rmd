@@ -1,0 +1,117 @@
+---
+title: "HW3_sliang"
+author: "Liang Shi"
+date: "9/26/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(vioplot)
+library(ggplot2)
+```
+
+# Problem 3
+
+I'm familiar with almost of these rules. What impress me is the rule "Don't use attach()". So I make some research and find out if we have several different datasets, the cold will become messy.
+
+# Problem 5
+
+```{r}
+df <- readRDS("HW3_data.rds")
+
+get_result <- function(df){
+  mean_1 <- mean(df$dev1)
+  mean_2 <- mean(df$dev2)
+  sd_1 <- sd(df$dev1)
+  sd_2 <- sd(df$dev2)
+  corr_12 <- cor(df$dev1, df$dev2)
+  return (c(mean_1, mean_2, sd_1, sd_2, corr_12))
+}
+
+df_organized <- data.frame(Observer = NULL, Mean_1 = NULL, Mean_2 = NULL, SD_1 = NULL, SD_2 = NULL, Corr_12 = NULL)
+
+for (i in 1:13){
+  result <- get_result(df[df$Observer == i, 2:3])
+  df_cur_observer = data.frame(Observer = i, Mean_1 = result[1], Mean_2 = result[2], SD_1 = result[3], SD_2 = result[4], Corr_12 = result[5])
+  df_organized <- rbind(df_organized, df_cur_observer)
+}
+kable(df_organized)
+```
+
+```{r}
+boxplot(df$dev1, main = "Dev1")
+boxplot(df$dev2, main = "Dev2")
+```
+
+These two distribution are almost symmertic, and no outliers here.
+
+```{r}
+vioplot(df$dev1, main = "Dev1")
+vioplot(df$dev2, main = "Dev2")
+```
+
+From the vioplot, we know that in dev1, the mode is near the median, but in dev2, the mode is a little skew from the median. And we can also see that the standard deviation of dev2 is larger than of dev1.
+
+```{r}
+ggplot(df, aes(x=dev1,y=dev2)) + geom_point() + facet_wrap(Observer~.)
+```
+
+I see many funny plots. From the scatter plot, we know the correlation between dev1 and dev2 is very weak, which agree with our data summary. I think plot the data is a very important way before analysis, because statistics only may misleading our approach.
+
+# Problem 6
+
+```{r}
+get_integral <- function(x){
+  y <- exp(- (x^2 / 2))
+  return(y)
+}
+
+x_range <- seq(0, 1, by = 1e-6)
+sum(get_integral(x_range) * 1e-6)
+```
+
+# Problem 7
+
+```{r}
+fx <- function(x){
+  y <- 3^x - sin(x) + cos(5*x)
+}
+
+fdx <- function(x){
+  y <- 3^x*log(3) - cos(x) - 5*sin(5*x)
+}
+
+ggplot(data = data.frame(x = 0,y = 0), mapping = aes(x = x)) + 
+  stat_function(fun = fx) + 
+  xlim(-5, 2.5) + 
+  geom_abline(intercept = 0, slope = 0, colour = "red")
+
+x <- -2.5
+while (abs(fx(x)-0) > 1e-6) {
+  x <- x - fx(x)/fdx(x)
+}
+x
+```
+
+# Problem 8
+
+```{r}
+start <- Sys.time()
+X <- cbind(rep(1,100),rep.int(1:10,time=10))
+beta <- c(4,5)
+y <- X%*%beta + rnorm(100)
+I <- diag(100)
+NJ_1 <- rep(1/100, 100)
+y_A <- vector()
+for (i in 1:100){
+  a <- I[,i] - NJ_1
+  num <- t(y)%*%a
+  y_A[i] <- num
+}
+SST = t(y_A)%*%y
+print(SST)
+end <- Sys.time()
+print(end - start)
+```
