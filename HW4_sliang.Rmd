@@ -1,0 +1,333 @@
+---
+title: "HW4_sliang"
+author: "Liang Shi"
+date: "10/11/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem 2
+
+```{r}
+set.seed(1256)
+theta <- as.matrix(c(1,2),nrow=2)
+X <- cbind(1,rep(1:10,10))
+h <- X%*%theta+rnorm(100,0,0.2)
+
+tol <- 0.00001
+alpha <- 0.01
+theta_ <- matrix(c(0,0), nrow=2)
+theta_h <- matrix(c(1,2), nrow=2)
+while(abs(theta_h[1] - theta_[1] > tol) & abs(theta_h[2] - theta_[2] > tol)){
+  theta_ <- theta_h
+  theta_h[1] <- theta_h[1] - alpha * mean(X %*% theta_h - h)
+  theta_h[2] <- theta_h[2] - alpha * mean((X %*% theta_h - h) * X[,2]) 
+}
+print(theta_h)
+
+lm(h~0+X)
+```
+
+# Problem 3
+
+```{r}
+
+```
+
+# Problem 4
+
+We know that $X'X\hat{\beta} = X'\underline{y}$, so we can use solve function to get $\hat{\beta}$
+beta_hat = solve(t(X)%*%X, t(X) %*% y)
+
+# Problem 5
+
+```{r}
+set.seed(12456)
+G <- matrix(sample(c(0,0.5,1),size=16000,replace=T),ncol=10)
+R <- cor(G) # R: 10 * 10 correlation matrix of G
+C <- kronecker(R, diag(1600)) # C is a 16000 * 16000 block diagonal matrix
+id <- sample(1:16000,size=932,replace=F)
+q <- sample(c(0,0.5,1),size=15068,replace=T) # vector of length 15068
+A <- C[id, -id] # matrix of dimension 932 * 15068
+B <- C[-id, -id] # matrix of dimension 15068 * 15068
+p <- runif(932,0,1)
+r <- runif(15068,0,1)
+C<-NULL #save some memory space
+```
+
+## Question a
+
+From the environment, we know that the size of A B is 107.1MB and 1.7Gb respectively. However, my mac is not powerful enough to run this code. (I tried to run it, but after 15 min wait, it's still pending).
+
+```{r}
+# system.time(y <- p+A%*%solve(B, q-r))
+```
+
+## Question b
+
+```{r}
+# system.time(y <- p+A%*%solve(B, q-r))
+# system.time(y <- p + A %*% solve(B) %*% (q - r))
+```
+
+## Question C
+
+
+# Problem 3
+
+## Question a
+
+```{r}
+proportion <- function(x, mar){
+  return(apply(x, mar, sum) / apply(x, mar, length))
+}
+```
+
+## Question b
+
+```{r}
+set.seed(12345)
+P4b_data <- matrix(rbinom(10, 1, prob = (31:40)/100), nrow = 10, ncol = 10, byrow = FALSE)
+```
+
+## Question c
+
+```{r}
+# by column
+proportion(P4b_data, 2)
+# by row
+proportion(P4b_data, 1)
+```
+
+We can find that columns of the data are the same. This means the probability of random variable in the generated matrix are the same.
+
+## Question d
+
+```{r}
+P4b_data <- matrix(0, nrow = 10, ncol = 10, byrow = F)
+prob_ = (31:40)/100
+get_coin <- function(data, prob_){
+  for (i in 1:10){
+    data[i,] <- rbinom(10, 1, prob = prob_[i])
+  }
+  return(data)
+}
+P4b_data <- get_coin(P4b_data, prob_)
+proportion(P4b_data, 2)
+proportion(P4b_data, 1)
+```
+
+# Problem 4
+
+## Question a
+
+```{r}
+df <- readRDS('HW3_data.rds')
+colnames(df) <- c('Observer', 'x', 'y')
+
+fun_plot <- function(i){
+  if (i == 0)
+    plot(df$x, df$y, main = "Entire dataset", xlab = "x", ylab = "y")
+  else
+    plot(df[which(df$Observer == i),]$x, df[which(df$Observer == i),]$y, main = paste("Observer", i), xlab = "x", ylab = "y")
+}
+```
+
+## Question b
+
+```{r}
+fun_plot(0)
+lapply(1:13, fun_plot)
+```
+
+# Problem 5
+
+## Part a
+
+```{r}
+library(downloader)
+download("http://www.farinspace.com/wp-content/uploads/us_cities_and_states.zip",dest="us_cities_states.zip")
+unzip("us_cities_states.zip", exdir="./")
+library(data.table)
+states <- fread(input = "./us_cities_and_states/states.sql",skip = 23,sep = "'", sep2 = ",", header = F, select = c(2,4))
+```
+
+## Part b
+```{r}
+library(knitr)
+library(dplyr)
+cities <- fread(input = "./us_cities_and_states/cities_extended.sql",skip = 23,sep = "'", sep2 = ",", header = F, select = c(2,4))
+cities <- unique(cities)
+num_city <- data.frame(table(cities$V4))
+colnames(num_city) <- c("State", "# of cities")
+kable(num_city)
+```
+
+## Part c
+
+```{r}
+letter_count <- data.frame(matrix(NA,nrow=51, ncol=26))
+getCount <- function(state, l){
+  state <- tolower(state)
+  dif <- gsub(l, "", state)
+  count <- nchar(state) - nchar(dif)
+  return(count)
+}
+for (i in 1:51){
+  for(j in 1:26){
+    letter_count[i,j] <- getCount(states$V2[i], letters[j])
+  }
+}
+colnames(letter_count) <- letters
+rownames(letter_count) <- states$V2
+kable(letter_count)
+```
+
+## Part d
+
+```{r}
+#https://cran.r-project.org/web/packages/fiftystater/vignettes/fiftystater.html
+library(ggplot2)
+library(fiftystater)
+data("fifty_states") # this line is optional due to lazy data loading
+crimes <- data.frame(state = tolower(rownames(USArrests)), USArrests)
+crimes$count_of_cities <- num_city$`# of cities`[1:50]
+# map_id creates the aesthetic mapping to the state name column in your data
+p <- ggplot(crimes, aes(map_id = state)) +
+# map points to the fifty_states shape data
+geom_map(aes(fill = count_of_cities), map = fifty_states) +
+expand_limits(x = fifty_states$long, y = fifty_states$lat) +
+coord_map() +
+scale_x_continuous(breaks = NULL) +
+scale_y_continuous(breaks = NULL) +
+labs(x = "", y = "") +
+theme(legend.position = "bottom",
+panel.background = element_blank())
+p
+```
+```{r}
+```
+
+## Problem 2
+
+```{r}
+library(quantreg)
+library(quantmod)
+#1)fetch data from Yahoo
+#AAPL prices
+apple08 <- getSymbols('AAPL', auto.assign = FALSE, from = '2008-1-1', to = 
+"2008-12-31")[,6]
+#market proxy
+rm08<-getSymbols('^ixic', auto.assign = FALSE, from = '2008-1-1', to = 
+"2008-12-31")[,6]
+
+#log returns of AAPL and market
+logapple08<- na.omit(ROC(apple08)*100)
+logrm08<-na.omit(ROC(rm08)*100)
+
+#OLS for beta estimation
+beta_AAPL_08<-summary(lm(logapple08~logrm08))$coefficients[2,1]
+
+#create df from AAPL returns and market returns
+df08<-cbind(logapple08,logrm08)
+set.seed(666)
+Boot=1000
+sd.boot=rep(0,Boot)
+for(i in 1:Boot){
+# nonparametric bootstrap
+bootdata=df08[sample(nrow(df08), size = 251, replace = TRUE),]
+sd.boot[i]= coef(summary(lm(AAPL.Adjusted~IXIC.Adjusted, data = bootdata)))[2,2]
+}
+head(sd.boot)
+```
+
+The problem is the formular in lm is wrong. I have already correct them.
+
+## Problem 3
+
+```{r}
+url_sen<-"https://www2.isye.gatech.edu/~jeffwu/wuhamadabook/data/Sensory.dat"
+df_sen<-read.table(url_sen, skip=1, fill=TRUE, header=TRUE)
+
+cur_item = 1
+align_data <- function(row_){
+    if (is.na(row_['X5'])){
+      row_[2:6] <- row_[1:5]
+      row_[1] <- cur_item
+    }else{
+      cur_item <- row_[1]
+    }
+    return(row_)
+}
+df_sen_align<-data.table(t(apply(df_sen, 1, align_data)))
+set.seed(666)
+Boot=1000
+beta.boot=rep(0,Boot)
+for(i in 1:Boot){
+# nonparametric bootstrap
+  bootdata=df_sen_align[sample(nrow(df_sen_align), size = nrow(df_sen_align), replace = TRUE),]
+  beta.boot[i]= coef(summary(lm(Item~., data = bootdata)))[2,2]
+}
+head(beta.boot)
+```
+
+## Part c
+
+```{r}
+library(parallel)
+library(foreach)
+library(doParallel)
+cores <- detectCores()
+cl <- makeCluster(cores - 1)
+# system.time({
+#   para <- function(){
+#     bootdata=df_sen_align[sample(nrow(df_sen_align), size = nrow(df_sen_align), replace = TRUE),]
+#     beta.boot[i]= coef(summary(lm(Item~., data = bootdata)))[2,2]
+#     return(beta.boot)
+#   }
+# 
+#   Boot <- matrix(1:100, ncol = 100)
+#   clusterExport(cl = cl, varlist = c("Boot", "para", "df_sen_align"), envir = environment())
+#   beta <- t(parSapply(cl, Boot, para))
+# })
+stopCluster(cl)
+```
+
+# Problem 3
+
+## Part a
+
+```{r}
+fx <- function(x){
+  y <- 3^x - sin(x) + cos(5*x)
+}
+
+fdx <- function(x){
+  y <- 3^x*log(3) - cos(x) - 5*sin(5*x)
+}
+
+ggplot(data = data.frame(x = 0,y = 0), mapping = aes(x = x)) + 
+  stat_function(fun = fx) + 
+  xlim(-5, 2.5) + 
+  geom_abline(intercept = 0, slope = 0, colour = "red")
+
+x <- -2.5
+iter <- function(x){
+  while (abs(fx(x)-0) > 1e-6) {
+    x <- x - fx(x)/fdx(x)
+  }
+  return(x)
+}
+iter(x)
+
+system.time(s <- lapply(-999:0, iter))
+```
+
+## Part b
+
+```{r}
+system.time(s <- mclapply(-999:0, iter, mc.cores = 8))
+```
