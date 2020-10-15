@@ -33,9 +33,39 @@ lm(h~0+X)
 
 # Problem 3
 
+## Part a
 ```{r}
+ind <- function(beta0,beta1){
+  X <- cbind(1,rep(1:10,10))
+h <- X%*%theta+rnorm(100,0,0.2)
+tol <- 1e-7
+alpha <- 1e-9
+theta_ <- matrix(c(0,0), nrow=2)
+theta_h <- matrix(c(beta0,beta1), nrow=2)
+while(abs(theta_h[1] - theta_[1] > tol) & abs(theta_h[2] - theta_[2] > tol)){
+  theta_ <- theta_h
+  theta_h[1] <- theta_h[1] - alpha * mean(X %*% theta_h - h)
+  theta_h[2] <- theta_h[2] - alpha * mean((X %*% theta_h - h) * X[,2]) 
+}
+return (theta_h)
+}
 
+bs = cbind(runif(n=10000, min = 0, max = 1),
+  runif(n=10000, min = 0, max = 1))
+
+beta_final = sapply(c(1:10000),function(no){ind(bs[no,][1],
+                       bs[no,][2])})
 ```
+```{r}
+beta_final[1,]
+```
+## Part b
+
+I think it might not be a good way. I think the step size is to small to get close to the true value
+
+## Part c
+
+I think gradient descent is a good way to solve the optimization problem. However, sometime the start value may determine the effect of optimization. Especially when the minimu value is not the true minimum.
 
 # Problem 4
 
@@ -281,18 +311,20 @@ library(parallel)
 library(foreach)
 library(doParallel)
 cores <- detectCores()
+```
+```{r eval=FALSE, message=TRUE}
 cl <- makeCluster(cores - 1)
-# system.time({
-#   para <- function(){
-#     bootdata=df_sen_align[sample(nrow(df_sen_align), size = nrow(df_sen_align), replace = TRUE),]
-#     beta.boot[i]= coef(summary(lm(Item~., data = bootdata)))[2,2]
-#     return(beta.boot)
-#   }
-# 
-#   Boot <- matrix(1:100, ncol = 100)
-#   clusterExport(cl = cl, varlist = c("Boot", "para", "df_sen_align"), envir = environment())
-#   beta <- t(parSapply(cl, Boot, para))
-# })
+system.time({
+  para <- function(){
+    bootdata=df_sen_align[sample(nrow(df_sen_align), size = nrow(df_sen_align), replace = TRUE),]
+    beta.boot[i]= coef(summary(lm(Item~., data = bootdata)))[2,2]
+    return(beta.boot)
+  }
+
+  Boot <- matrix(1:100, ncol = 100)
+  clusterExport(cl = cl, varlist = c("Boot", "para", "df_sen_align"), envir = environment())
+  beta <- t(parSapply(cl, Boot, para))
+})
 stopCluster(cl)
 ```
 
@@ -314,14 +346,12 @@ ggplot(data = data.frame(x = 0,y = 0), mapping = aes(x = x)) +
   xlim(-5, 2.5) + 
   geom_abline(intercept = 0, slope = 0, colour = "red")
 
-x <- -2.5
 iter <- function(x){
   while (abs(fx(x)-0) > 1e-6) {
     x <- x - fx(x)/fdx(x)
   }
   return(x)
 }
-iter(x)
 
 system.time(s <- lapply(-999:0, iter))
 ```
@@ -331,3 +361,5 @@ system.time(s <- lapply(-999:0, iter))
 ```{r}
 system.time(s <- mclapply(-999:0, iter, mc.cores = 8))
 ```
+
+It seem part b cost much more time than a, I think this means for simple problems, muliti-threading does not improve efficiency.
