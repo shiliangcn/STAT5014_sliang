@@ -1,0 +1,65 @@
+---
+title: "HW5_Shi"
+author: "Liang Shi"
+date: "11/3/2020"
+output: pdf_document
+---
+
+```{r include=FALSE}
+library(knitr)
+library(ggplot2)
+```
+
+# Problem 3
+
+```{r}
+df <- read.csv('Edstats_csv/EdStatsData.csv')
+df_clean <- df[apply(df, 1, function(x) !all(is.na(x[5:70]))),]
+df_clean[is.na(df_clean)] <- 0
+print('Row data:')
+dim(df)
+print('Cleaned data:')
+dim(df_clean)
+```
+
+
+```{r}
+c_1 <- df_clean[df_clean$Country.Code=="CPV",][5:70]
+s_1 <- summary(c_1)
+kable(c_1, caption = "summary for China")
+```
+
+```{r}
+c_2 <- df_clean[df_clean$Country.Code=="KEN",][5:70]
+s_2<- summary(c_2)
+kable(c_2, caption = "summary for Kenya")
+```
+
+# Problem 4
+
+```{r}
+df_first_1 <- c_1[1:2]
+df_first_1 = df_first_1[which(df_first_1 > 0),  ,drop=T]
+df_first_1 <- df_first_1[apply(df_first_1, 1, function(x) !all(is.na(x))),]
+y = log(df_first_1$X1970)
+x = log(df_first_1$X1971)
+lm_fit <- lm(y ~ x)
+par(mfrow=c(3,2))
+hist(x)
+hist(y)
+qqnorm(x)
+qqnorm(y)
+plot(residuals(lm_fit))
+plot(cooks.distance(lm_fit))
+```
+
+# Problem 5
+
+```{r}
+qplot(x, geom="histogram")
+qplot(y, geom="histogram")
+ggplot(df_first_1, aes(sample=log(X1970)))+stat_qq()
+ggplot(df_first_1, aes(sample=log(X1971)))+stat_qq()
+ggplot(lm_fit, aes(x=x, y=lm_fit$residuals)) + geom_point()
+ggplot(lm_fit, aes(x=x, y=cooks.distance(lm_fit))) + geom_point()
+```
