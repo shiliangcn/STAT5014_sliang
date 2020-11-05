@@ -26,13 +26,13 @@ dim(df_clean)
 ```{r}
 c_1 <- df_clean[df_clean$Country.Code=="CPV",][5:70]
 s_1 <- summary(c_1)
-kable(c_1, caption = "summary for China")
+kable(s_1, caption = "summary for China")
 ```
 
 ```{r}
 c_2 <- df_clean[df_clean$Country.Code=="KEN",][5:70]
 s_2<- summary(c_2)
-kable(c_2, caption = "summary for Kenya")
+kable(s_2, caption = "summary for Kenya")
 ```
 
 # Problem 4
